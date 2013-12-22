@@ -258,6 +258,14 @@ DownloadList::receive_view_input(Input type) {
 
     break;
 
+  case INPUT_CHANGE_DIRECTORY_BASE:
+    title = "change_directory_base";
+
+    input->str() = rpc::call_command_string("directory.default");
+    input->set_pos(input->str().length());
+
+    break;
+
   case INPUT_COMMAND:
     title = "command";
     break;
@@ -319,6 +327,17 @@ DownloadList::receive_exit_input(Input type) {
       control->core()->push_log_std("New root directory \"" + rpc::call_command_string("d.directory", rpc::make_target(*current_view()->focus())) + "\" for torrent.");
       break;
 
+    case INPUT_CHANGE_DIRECTORY_BASE:
+      if (current_view()->focus() == current_view()->end_visible())
+        throw torrent::input_error("No download in focus to change base directory.");
+
+      if ((*current_view()->focus())->is_open())
+        throw torrent::input_error("Cannot change base directory on an open download.");
+
+      rpc::call_command("d.directory_base.set", rak::trim(input->str()), rpc::make_target(*current_view()->focus()));
+      control->core()->push_log_std("New base directory \"" + rpc::call_command_string("d.directory_base", rpc::make_target(*current_view()->focus())) + "\" for torrent.");
+      break;
+
     case INPUT_COMMAND:
       rpc::parse_command_single(current_view()->focus() != current_view()->end_visible() ?
                                 rpc::make_target(*current_view()->focus()) : rpc::make_target(),
@@ -345,6 +364,7 @@ DownloadList::setup_keys() {
   m_bindings['\n']          = std::tr1::bind(&DownloadList::receive_view_input, this, INPUT_LOAD_MODIFIED);
   m_bindings[KEY_ENTER]     = std::tr1::bind(&DownloadList::receive_view_input, this, INPUT_LOAD_MODIFIED);
   m_bindings['\x0F']        = std::tr1::bind(&DownloadList::receive_view_input, this, INPUT_CHANGE_DIRECTORY);
+  m_bindings['\x09']        = std::tr1::bind(&DownloadList::receive_view_input, this, INPUT_CHANGE_DIRECTORY_BASE);
   m_bindings['X' - '@']     = std::tr1::bind(&DownloadList::receive_view_input, this, INPUT_COMMAND);
 
   m_uiArray[DISPLAY_LOG]->bindings()[KEY_LEFT] =
