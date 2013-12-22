@@ -89,7 +89,6 @@ public:
     INPUT_CHANGE_DIRECTORY_BASE,
     INPUT_COMMAND
   } Input;
-
   DownloadList();
   ~DownloadList();
 
